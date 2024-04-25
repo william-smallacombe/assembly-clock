@@ -1,0 +1,285 @@
+      MOV R11,#0x0A
+      MOV R10, #0
+first:
+      MOV R1, #0
+      PUSH {R0, R1}
+      BL main
+first_cont:
+      PUSH {R0, R1}
+      MOV R10, #0
+      MOV R0, #Seconds_1_array
+      LDR R1, [R0]
+      ADD R1, R1, #1
+      STR R1, [R0]
+      CMP R1, #9
+      BGT second
+      B Delay
+second:
+      MOV R1, #0
+      MOV R0, #Seconds_1_array
+      STR R1, [R0]
+      MOV R0, #Seconds_2_array
+      LDR R1, [R0]
+      ADD R1, R1, #1
+      STR R1, [R0]
+      CMP R1, #5
+      BGT third
+      B Delay
+third:
+      MOV R1, #0
+      MOV R0, #Seconds_2_array
+      STR R1, [R0]
+      MOV R0, #Minutes_1_array
+      LDR R1, [R0]
+      ADD R1, R1, #1
+      STR R1, [R0]
+      CMP R1, #9
+      BGT fourth
+      B Delay
+fourth:
+      MOV R1, #0
+      MOV R0, #Minutes_1_array
+      STR R1, [R0]
+      MOV R0, #Minutes_2_array
+      LDR R1, [R0]
+      ADD R1, R1, #1
+      STR R1, [R0]
+      CMP R1, #9
+      BGT clear
+      B Delay
+main:
+      PUSH {LR}
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      POP {LR}
+      LDR R0, .LastKeyAndReset
+      CMP R0, #80
+      BEQ Stop
+      CMP R0, #82
+      BEQ Reset
+      CMP R0, #83
+      BEQ Split
+      B first_cont
+Delay:
+      PUSH {R1, R4, R5, R6}
+      LDR R1, .Time
+timer:
+      MOV R5, R1
+      LDR R4, .Time
+      SUB R6, R4, R5
+      CMP R6, #1
+      BLT timer
+      POP {R1, R4, R5, R6}
+      B first
+Colon:
+      .ASCIZ ":"
+Text2:
+      .ASCIZ "Split:"
+Text1:
+      .ASCIZ "Timer:"
+Print:
+      PUSH {R0, R1}
+      CMP R10, #0
+      BEQ Write_new
+      MOV R0, #Minutes_2_array
+      CMP R10, #1
+      BEQ Write_number
+      MOV R0, #Minutes_1_array
+      CMP R10, #2
+      BEQ Write_number
+      CMP R10, #3
+      BEQ Colon_write
+      MOV R0, #Seconds_2_array
+      CMP R10, #4
+      BEQ Write_number
+      MOV R0, #Seconds_1_array
+      CMP R10, #5
+      BEQ Write_number
+      CMP R10, #6
+      BEQ Write_split
+      MOV R0, #Minutes_2_array
+      CMP R10, #7
+      BEQ Write_number_2
+      MOV R0, #Minutes_1_array
+      CMP R10, #8
+      BEQ Write_number_2
+      CMP R10, #9
+      BEQ Colon_write
+      MOV R0, #Seconds_2_array
+      CMP R10, #10
+      BEQ Write_number_2
+      MOV R0, #Seconds_1_array
+      CMP R10, #11
+      BEQ Write_number_2
+      POP {R0, R1}
+      RET
+Colon_write:
+      MOV R0, #Colon
+      STR R0, .WriteString
+      ADD R10, R10, #1
+      RET
+Write_new:
+      STRB R11,.WriteChar
+      STRB R11,.WriteChar
+      STRB R11,.WriteChar
+      STRB R11,.WriteChar
+      MOV R0, #Text1
+      STR R0, .WriteString
+      ADD R10, R10, #1
+      RET
+Write_number:
+      LDR R1, [R0]
+      STR R1, .WriteUnsignedNum
+      ADD R10, R10, #1
+      RET
+Write_number_2:
+      LDR R1, [R0 + #4]
+      STR R1, .WriteUnsignedNum
+      ADD R10, R10, #1
+      RET
+Write_split:
+      MOV R0, #Text2
+      STR R0, .WriteString
+      ADD R10, R10, #1
+      RET
+Reset:
+      MOV R0, #Seconds_1_array
+      PUSH {LR}
+      BL Reset_splits
+      POP {LR}
+      MOV R0, #Seconds_2_array
+      PUSH {LR}
+      BL Reset_splits
+      POP {LR}
+      MOV R0, #Minutes_1_array
+      PUSH {LR}
+      BL Reset_splits
+      POP {LR}
+      MOV R0, #Minutes_2_array
+      PUSH {LR}
+      BL Reset_splits
+      POP {LR}
+      PUSH {LR}
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      BL Print
+      POP {LR}
+      B Stop
+Reset_splits:
+      PUSH {R1, R2, R3, R4, R5}
+      MOV R1, #-4
+      MOV R2, #0
+Reset_loop:
+      ADD R1, R1, #4
+      STR R2, [R0 + R1]
+      CMP R1, #8
+      BLT Reset_loop
+      POP {R1, R2, R3, R4, R5}
+      MOV R10, #0
+      RET
+Stop:
+      LDR R0, .LastKeyAndReset
+      CMP R0, #82
+      BEQ Reset
+      CMP R0, #80
+      BEQ first_cont
+      B Stop
+clear:
+      MOV R1, #0
+      MOV R0, #Seconds_1_array
+      STR R1, [R0]
+      MOV R0, #Seconds_2_array
+      STR R1, [R0]
+      MOV R0, #Minutes_1_array
+      STR R1, [R0]
+      MOV R0, #Minutes_2_array
+      STR R1, [R0]
+      B first
+Split:
+      PUSH {R0, R1, R2, R3}
+      MOV R0, #Seconds_1_array
+      MOV R1, #8
+      PUSH {LR}
+      BL Split_loop
+      POP {LR}
+      PUSH {R0, R1, R2, R3}
+      MOV R0, #Seconds_2_array
+      MOV R1, #8
+      PUSH {LR}
+      BL Split_loop
+      POP {LR}
+      PUSH {R0, R1, R2, R3}
+      MOV R0, #Minutes_1_array
+      MOV R1, #8
+      PUSH {LR}
+      BL Split_loop
+      POP {LR}
+      PUSH {R0, R1, R2, R3}
+      MOV R0, #Minutes_2_array
+      MOV R1, #8
+      PUSH {LR}
+      BL Split_loop
+      POP {LR}
+      B first
+Split_loop:
+      SUB R1, R1, #4
+      MOV R3, #0
+      ADD R3, R1, #4
+      LDR R2, [R0 + R1]
+      STR R2, [R0 + R3]
+      CMP R1, #0
+      BNE Split_loop
+      MOV R3, #0
+      POP {R0, R1, R2, R3}
+      RET
+Seconds_1_array:.Word 0
+      0
+      0
+      0
+      0
+      0
+      0
+      0
+Seconds_2_array:.Word 0
+      0
+      0
+      0
+      0
+      0
+      0
+      0
+Minutes_1_array:.Word 0
+      0
+      0
+      0
+      0
+      0
+      0
+      0
+Minutes_2_array:.Word 0
+      0
+      0
+      0
+      0
+      0
+      0
+      0
